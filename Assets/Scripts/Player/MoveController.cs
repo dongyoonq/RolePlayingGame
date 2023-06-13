@@ -5,13 +5,17 @@ using UnityEngine.InputSystem;
 
 public class MoveController : MonoBehaviour
 {
+    [SerializeField] bool debug;
+
     Vector3 moveDir;
     CharacterController controller;
     Animator animator;
 
-    public float moveSpeed;
-    public float runSpeed;
-    public float jumpForce;
+    [SerializeField] float moveSpeed;
+    [SerializeField] float runSpeed;
+    [SerializeField] float jumpForce;
+    [SerializeField] float runStepRange;
+    [SerializeField] float walkStepRange;
 
     private float ySpeed;
     private float lastSpeed;
@@ -48,6 +52,8 @@ public class MoveController : MonoBehaviour
         moveDir.z = value.Get<Vector2>().y;
     }
 
+    float lastStepTime = 0.5f;
+
     void Move()
     {
         if (moveDir.magnitude == 0)
@@ -66,6 +72,22 @@ public class MoveController : MonoBehaviour
 
         float percent = ((OnRunKey) ? 1 : 0.5f) * moveDir.magnitude;
         animator.SetFloat("Speed", percent, 0.1f, Time.deltaTime);
+
+        lastStepTime -= Time.deltaTime;
+        if (lastStepTime < 0)
+        {
+            lastStepTime = 0.5f;
+            GenerateFootStepSound();
+        }
+    }
+
+    void GenerateFootStepSound()
+    {
+        Collider[] colliders = Physics.OverlapSphere(transform.position, (OnRunKey) ? runStepRange : walkStepRange);
+        foreach (Collider collider in colliders)
+        {
+            collider.GetComponent<IHearable>()?.Hear(transform);
+        }
     }
         
     void OnJump(InputValue value)
@@ -100,5 +122,15 @@ public class MoveController : MonoBehaviour
             lastSpeed = moveSpeed;
             OnRunKey = false;
         }
+    }
+
+    private void OnDrawGizmos()
+    {
+        if (!debug)
+            return;
+
+        Gizmos.color = Color.green;
+        Gizmos.DrawWireSphere(transform.position, walkStepRange);
+        Gizmos.DrawWireSphere(transform.position, runStepRange);
     }
 }

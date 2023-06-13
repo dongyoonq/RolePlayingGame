@@ -15,5 +15,5 @@ MonoBehaviour:
   equipType: 0
   Hp: 0
   Mp: 0
-  ad: 20
+  ad: 10
   ap: 0
